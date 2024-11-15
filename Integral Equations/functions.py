@@ -36,6 +36,7 @@ def solve_fredholm_leg(k, f, l, n, rng):
     """
     nodes, weights = np.polynomial.legendre.leggauss(n)
     grid_np = (rng[1] - rng[0]) * nodes / 2 + (rng[1] + rng[0]) / 2
+    weights *= (rng[1] - rng[0]) / 2
     k_matrix = k(grid_np[:, np.newaxis], grid_np[np.newaxis, :])
     k_matrix[:] *= weights
     k_matrix *= l
@@ -80,20 +81,24 @@ def solve_volterra_tr(k, f, l, grid):
     :return: np.array
     """
     h = grid[1] - grid[0]
-
     grid_np = np.array(grid)
     k_matrix = k(grid_np[:, np.newaxis], grid_np[np.newaxis, :])
     k_matrix = np.tril(k_matrix)
-    k_matrix *= (l * h)
 
-    k_matrix[:, 0] /= 2.
-    k_matrix[:, -1] /= 2.
+    np.fill_diagonal(k_matrix, np.diag(k_matrix) / 2)
 
+    k_matrix *= l * h
+
+    k_matrix[1:, 0] /= 2.
+    k_matrix[:-2, -1] /= 2.
+
+    k_matrix[0, 0] = 0
     k_matrix += np.eye(k_matrix.shape[1])
     f_vec = f(grid)
 
     f_vec = f_vec.reshape(-1, 1)
     sol = np.linalg.solve(k_matrix, f_vec)
+
     return sol
 
 

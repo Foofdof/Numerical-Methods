@@ -36,9 +36,13 @@ def task1():
 
     grid_p = np.linspace(t_min, t_max, 100)
 
+    tck_1 = interpolate.splrep(grid, sol, k=3)
+    tck_2 = interpolate.interp1d(grid2, sol2.flatten(), kind='linear')
+
     fig, ax = plt.subplots(1)
     ax.scatter(grid, sol, label='$x(t), n=10$', color='blue', marker='o')
     ax.scatter(grid2, sol2, label='$x(t), n=3$', color='blue', marker='^')
+    ax.plot(grid, interpolate.splev(grid, tck_1, der=0), label='$x(t)_{int}$', color='blue')
 
     ax.scatter(grid_g, sol_g, label='$x(t), n=10$', color='black', marker='o')
     ax.scatter(grid2_g, sol2_g, label='$x(t), n=3$', color='black', marker='^')
@@ -52,9 +56,6 @@ def task1():
     plt.title('Fredholm int. eq. solution', fontsize=16, fontweight='bold')
     plt.show()
 
-    tck_1 = interpolate.splrep(grid, sol, s=0)
-    tck_2 = interpolate.interp1d(grid2, sol2.flatten(), kind='linear')
-
     print("n=10: ", interpolate.splev(sig_points, tck_1, der=0))
     print("n=3: ", tck_2(sig_points))
 
@@ -63,26 +64,32 @@ def task2():
     t_min = 0
     t_max = 4
     lmbd = -1
-    tau = 0.005
+    tau = 0.2
     sigma_classic = np.array([1 / 6, 2 / 6, 2 / 6, 1 / 6])
-    sig_points = [t_min, np.average((t_min, t_max)), t_max]
+    # sig_points = [t_min, np.average((t_min, t_max)), t_max]
     funcs = [lambda t, s: np.exp(s)/(np.exp(t)+1), lambda t: np.exp(-t)]
     # funcs2 = [lambda t, s: np.exp(s) / (np.exp(t) + 1) * np.sqrt(1-((s-(t_max+t_min)/2)*2/(t_max-t_min))**2), lambda t: np.exp(-t)]
     n = np.int64(np.round(t_max - t_min)/tau)+1
     grid = np.arange(t_min, t_max+tau, tau)
     sol = solve_volterra_tr(funcs[0], funcs[1], lmbd, grid)
-    sol_g, grid_g = solve_volterra_leg(funcs[0], funcs[1], lmbd, n, (t_min, t_max))
+    # sol_g, grid_g = solve_volterra_leg(funcs[0], funcs[1], lmbd, n, (t_min, t_max))
+
+    grid_p = np.linspace(t_min, t_max, 100)
 
     funcs = [lambda t, u, a: np.exp(t) * u[0] / (np.exp(t) + 1) + 1]
     u_list = runge2(funcs, [0], grid, 0, sigma_classic)
     sol_ode = u_list[0]/(np.exp(grid) + 1) + np.exp(-grid)
-    print(sol_ode[0], sol_ode[-1])
+    # print(sol_ode[0], sol_ode[-1])
+
+    tck_1 = interpolate.splrep(grid, sol, k=3)
+    tck_2 = interpolate.splrep(grid, sol_ode, k=3)
 
     fig, ax = plt.subplots(1)
-    ax.plot(grid, sol, label=f'$x(t), n={n}$'+', трапеции', color='blue')
-    # ax.plot(grid_g, sol_g, label=f'$x(t), n={n}$'+', лежандр', color='black')
-    ax.plot(grid, sol_ode, label=f'$x(t), n={n}$'+', ОДУ', color='red')
-    ax.plot(grid, p_sol_2(grid, lmbd), label=f'$x(t), n={n}$' + ', точное решение', color='green')
+    ax.scatter(grid, sol, label=f'$x(t), n={n}$'+', трапеции', color='blue')
+    ax.scatter(grid, sol_ode, label=f'$x(t), n={n}$'+', ОДУ', color='red')
+    ax.plot(grid_p, interpolate.splev(grid_p, tck_1, der=0), label=None, color='blue')
+    ax.plot(grid_p, interpolate.splev(grid_p, tck_2, der=0), label=None, color='red')
+    ax.plot(grid_p, p_sol_2(grid_p, lmbd), label=f'$x(t)' + ', точное решение', color='green')
 
     ax.set_xlabel('t')
     ax.set_ylabel('x(t)')
@@ -91,7 +98,18 @@ def task2():
     plt.title('Volterra int. eq. solution', fontsize=16, fontweight='bold')
     plt.show()
 
+    fig, ax = plt.subplots(1)
+    ax.plot(grid_p, np.abs(p_sol_2(grid_p, lmbd) - interpolate.splev(grid_p, tck_1, der=0)), label='трапеции', color='blue')
+    ax.plot(grid_p, np.abs(p_sol_2(grid_p, lmbd) - interpolate.splev(grid_p, tck_2, der=0)), label='ОДУ', color='red')
+
+    ax.set_xlabel('t')
+    ax.set_ylabel('x(t)')
+    ax.legend()
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5, color='gray')
+    plt.title('Abs Error', fontsize=16, fontweight='bold')
+    plt.show()
+
 
 if __name__ == "__main__":
     task1()
-    task2()
+    # task2()
