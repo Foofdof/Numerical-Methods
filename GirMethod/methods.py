@@ -69,7 +69,7 @@ def runge2(funcs, y_ic, x_range, mode, sigma_list):
     y_list[:, 0] = y_ic
 
     for idx in range(1, num_steps):
-        h = x_range[idx] - x_range[idx-1]
+        h = x_range[idx] - x_range[idx - 1]
         x_prev = x_range[idx - 1]
         y_prev = y_ic.copy()
         y_new = y_prev.copy()
@@ -188,10 +188,10 @@ def gear_method(funcs, init_cond, t_grid, m, base_method_c, max_iter=1e3, delta=
             var_list = np.hstack(([t], x))
             f = np.array([func(var_list) for func in funcs])
             res = x.copy()
-            for j in range(1, m+1):
-                res += sol[:, i-j]*a_list[j]/a_list[0]
+            for j in range(1, m + 1):
+                res += sol[:, i - j] * a_list[j] / a_list[0]
 
-            return res - delta_t*f/a_list[0]
+            return res - delta_t * f / a_list[0]
 
         def jacobian(x):
             var_list = np.hstack(([t], x))
@@ -220,5 +220,20 @@ def gear_method(funcs, init_cond, t_grid, m, base_method_c, max_iter=1e3, delta=
     return sol
 
 
-def adams_methods(funcs, init_cond, t_grid, m, base_method_c, max_iter=1e3, delta=1e-6):
-    
+def adams_bashforth_moulton_methods(funcs, init_cond, t_grid, base_method_c):
+    sol = np.zeros((funcs.shape[0], t_grid.shape[0]))
+
+    sol[:, :4] = base_method_c
+    tau = t_grid[1] - t_grid[0]
+
+    for i in range(3, t_grid.shape[0]-1):
+        fi = funcs[0](np.hstack(([t_grid[i]], sol[:, i][0])))
+        fi1 = funcs[0](np.hstack(([t_grid[i-1]], sol[:, i-1][0])))
+        fi2 = funcs[0](np.hstack(([t_grid[i-1]], sol[:, i-1][0])))
+        fi3 = funcs[0](np.hstack(([t_grid[i-1]], sol[:, i-1][0])))
+
+        sol[:, i+1] = sol[:, i] + tau/24. * (55*fi - 59*fi1 + 37*fi2 - 9*fi3)
+        var_list = np.hstack(([t_grid[i+1]], sol[:, i+1][0]))
+        sol[:, i+1] = sol[:, i] + tau/24. * (9*funcs[0](var_list) + 19*fi - 5*fi1 + fi2)
+
+    return sol

@@ -3,7 +3,8 @@ from methods import (
     euler_method, euler_method2,
     modified_euler_method1,
     implicit_euler_method,
-    gear_method, runge2
+    gear_method, runge2,
+    adams_bashforth_moulton_methods,
 )
 import matplotlib.pyplot as plt
 
@@ -126,6 +127,8 @@ def task_4(a, b, tau, m, base_method_c='ie'):
 
 def part2(a, b, tau, m, base_method_c='ie'):
     funcs = np.array([
+
+
         lambda var_list: 2*np.sin(var_list[0]) + var_list[1],
     ])
     initial_conditions = np.array([1], dtype=np.float64)
@@ -140,21 +143,32 @@ def part2(a, b, tau, m, base_method_c='ie'):
         sigma_list=sigma_classic
     )
 
+    sol_a = adams_bashforth_moulton_methods(funcs, initial_conditions, t_grid, sol1[0, :4])[0]
 
+    sol_g = gear_method(
+        funcs=funcs,
+        init_cond=initial_conditions,
+        t_grid=t_grid,
+        base_method_c='rk',
+        m=m,
+    )[0]
 
-    pr_sol = np.array([
-        np.exp(t_grid)*(1+1)-np.sin(t_grid)-np.cos(t_grid),
-    ])
+    pr_sol = np.array(
+        np.exp(t_grid)*(1+1)-np.sin(t_grid)-np.cos(t_grid)
+    )
 
     fig, ax = plt.subplots(2)
-    for j, sol in enumerate([sol1, np.abs(sol1 - pr_sol)]):
-        for i in range(sol.shape[0]):
-            ax[j].plot(t_grid, sol[i], c=colors[i], label=f'$x_{i + 1}(t)$')
+    ax[0].plot(t_grid, sol_a, c='red', label=f'$x_a(t)$')
+    ax[0].plot(t_grid, sol_g, c='black', label=f'$x_g(t)$')
+    ax[0].plot(t_grid, pr_sol, c='blue', label=f'$x_p(t)$')
+
+    ax[1].plot(t_grid, np.abs(sol_a-pr_sol), c='red', label=f'$x_a(t)$')
+    ax[1].plot(t_grid, np.abs(sol_g-pr_sol), c='black', label=f'$x_g(t)$')
 
     for a in ax:
         a.legend()
         a.grid(True, which='both', linestyle='--', linewidth=0.5, color='gray')
-    fig.suptitle('$Runge_{class} $'+' '+'$ tau: {tau}, m: {m}$', fontsize=16, fontweight='bold')
+    fig.suptitle('Adams-Bashforth-Moulton', fontsize=16, fontweight='bold')
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     plt.show()
 
