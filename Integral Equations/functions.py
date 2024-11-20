@@ -185,3 +185,15 @@ def runge2(funcs, y_ic, x_range, mode, sigma_list, a=0):
         y_list[:, idx] = y_new
 
     return y_list
+
+def euler_method(funcs, init_cond, t_grid):
+    sol = np.zeros((funcs.shape[0], t_grid.shape[0]))
+    sol[:, 0] = init_cond
+
+    for i in range(1, len(t_grid)):
+        delta_t = t_grid[i] - t_grid[i - 1]
+        var_list = np.concatenate(([t_grid[i - 1]], sol[:, i - 1]))
+        for j, func in enumerate(funcs):
+            sol[j, i] = sol[j, i - 1] + delta_t * func(var_list)
+
+    return sol

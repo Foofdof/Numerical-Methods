@@ -2,7 +2,7 @@ import numpy as np
 from functions import (
     solve_fredholm_tr, solve_fredholm_leg,
     solve_volterra_tr, solve_volterra_leg,
-    runge2
+    runge2, euler_method
 )
 import matplotlib.pyplot as plt
 from scipy import interpolate
@@ -95,8 +95,11 @@ def task2():
     grid_p = np.linspace(t_min, t_max, 100)
 
     funcs = [lambda t, u, a: np.exp(t) * u[0] / (np.exp(t) + 1) + 1]
+    funcs2 = np.array([lambda var_list: np.exp(var_list[0]) * var_list[1] / (np.exp(var_list[0]) + 1) + 1])
     u_list = runge2(funcs, [0], grid, 0, sigma_classic)
-    sol_ode = u_list[0]/(np.exp(grid) + 1) + np.exp(-grid)
+    u_list2 = euler_method(funcs2, [0], grid)
+    sol_ode = u_list[0] / (np.exp(grid) + 1) + np.exp(-grid)
+    sol_ode2 = u_list2[0] / (np.exp(grid) + 1) + np.exp(-grid)
     # print(sol_ode[0], sol_ode[-1])
 
     tck_1 = interpolate.splrep(grid, sol, k=3)
@@ -105,6 +108,7 @@ def task2():
     fig, ax = plt.subplots(1)
     ax.scatter(grid, sol, label=f'$x(t), n={n}$'+', трапеции', color='blue')
     ax.scatter(grid, sol_ode, label=f'$x(t), n={n}$'+', ОДУ', color='red')
+    ax.scatter(grid, sol_ode2, label=f'$x(t), n={n}$' + ', ОДУ2', color='yellow')
     ax.plot(grid_p, interpolate.splev(grid_p, tck_1, der=0), label=None, color='blue')
     ax.plot(grid_p, interpolate.splev(grid_p, tck_2, der=0), label=None, color='red')
     ax.plot(grid_p, p_sol_2(grid_p, lmbd), label=f'$x(t)' + ', точное решение', color='green')
@@ -129,5 +133,5 @@ def task2():
 
 
 if __name__ == "__main__":
-    task1()
-    # task2()
+    # task1()
+    task2()
